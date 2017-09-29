@@ -1,0 +1,230 @@
+---
+title: "Empirical Bayesian Analysis Applied to Manufacturing"
+author: "Daniel Woodie"
+date: ""
+output: pdf_document
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem Statement and Setup
+I manage the quality of fishing lines that go through multiple factories. Each fishing line gets tested before ever being packaged and shipped out to a customer. I'd like to understand failure rates to better understand overall quality of my lines in the factories. Failures and passes can be considered a binomial distribution. It takes the form:
+
+$$
+L\big(p\big)= \frac{n!}{x!(n - x!)}p^{y}(1- p)^{n-y}
+$$
+
+In this case, $p$ is the probability of a fishing line failing. The conjugate prior for this scenario is a Beta distribution.
+
+$$
+\pi\big(p\big) = \frac{1}{B\big(\alpha)} p^{\alpha-1}(1-p)^{\beta-1}
+$$
+
+
+$$
+p \sim Beta(\alpha, \beta)
+$$
+$$
+y_{1}, ..., y_{K} \sim Binom(n, p)
+$$
+
+Posterior
+
+$$
+\propto p^{\alpha + y - 1}(1- p)^{\beta+ n- y - 1}
+$$
+
+
+
+The posterior, can be summarized as:
+
+$$
+Beta(\alpha + y, \beta + n - y)
+$$
+
+The expected value for this distribution is:
+$$
+E[p] = \frac{\alpha + y}{\alpha + \beta + n}
+$$
+
+
+\newpage
+# Sample Calculation
+
+Let's look at two hypothetical fishing lines. First, let's set $\alpha$ and $\beta$. 
+$$
+p \sim Beta(\alpha = 14, \beta = 6)
+$$
+
+Therefore, 
+$$
+E[p] = \frac{\alpha}{\alpha + \beta} = \frac{14}{14 + 6} = .7
+$$
+
+When you update this estimate for a fishing line that has 4 failures out of 11 this becomes:
+$$
+E[p] = \frac{\alpha + 4}{\alpha + \beta + 4 + 7} = \frac{14 + 4}{14 + 6 + 4 + 7} = \frac{18}{31} =  .58
+$$
+What about a fishing line that has 4000 failures out of 11000:
+$$
+E[p] = \frac{\alpha + 4000}{\alpha + \beta + 4000 + 7000} = \frac{18 + 4000}{14 + 6 + 4000 + 7000} = \frac{4018}{11021} =  .365
+$$
+
+\newpage
+# The Plot Thickens
+
+One aspect that we haven't considered here is that different factories may have different failure rates. For example, the quality of a particular fishing line could be great at Factory A but at Factory B the quality is absolutely terrible. As such, it may be important to evaluate whether improving quality issues should be focused on a fishing line across the entire supply chain or at a specific factory.
+
+# Defining the Linear Mixed Model
+$Y_{ij}$ is the failure count in Factory i for Line j. $N_{ij}$ is number of units received. Model is something like:
+$$
+\ Y_{ij} \sim Binom(p = \mu + F_i + L_j, \ n = N_ij)
+$$
+$$
+\ where \ \mu \sim Normal(...) \\
+$$
+
+$$
+\ F \sim Normal(0, \sigma_{F}), \ \sigma_{F} ~ HalfNormal(...) \\
+$$
+$$
+\ L \sim Normal(0, \sigma_{L}), \sigma_{L} ~ HalfNormal(...) \\
+$$
+
+
+As an aside here, I think it might make more sense to treat the priors on lines, factories, and the combination therein as betas instead of normals centered on zero. 
+
+
+\newpage
+
+To vary this over time, we simply restructure the model to be of the form:
+
+$$
+\pi_{n}\big(\theta_{j}\big) \propto \pi\big(\theta_{j}\big)L\big(\theta_{j}\big)
+$$
+where you're calculating a new $\theta$ for each time point $j$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Background
+## Maximum Likelihood Estimation
+You have some density where is $x$ is a function of $\theta$: 
+
+$$
+f(x|\theta)
+$$
+and some data that comes from this density:
+
+$$
+x_{1}, x_{2}, ..., x_{n}
+$$
+
+$\theta$ can be estimated by maximizing the likelihood function:
+
+$$
+\hat \theta = arg \ \underset{\theta} max \ L\big(\theta\big) = arg \ \underset{\theta} max \ \Pi_{i=1}^{n}f\big(x_{i}|\theta\big)
+$$
+## Bayesian Statistics
+Bayes Theorem:
+
+$$
+P(A|B) = \frac{P(A)P(B|A)}{P(B)}
+$$
+
+
+Traditional Statistics:
+
+$$
+P(X_{1}, ..., X_{n} | \theta)
+$$
+
+
+Bayesian Statistics:
+
+$$
+P(\theta | X_{1}, ..., X_{n})
+$$
+
+You use Bayes theorem then to come up with an estimate:
+
+$$
+P(\theta | X_{1}, ..., X_{n}) = \frac{P(\theta)P(X_{1}, ..., X_{n}|\theta)}{P(X_{1}, ..., X_{n})}
+$$
+
+Because the denominator does not involve $\theta$, most people simplify this to be:
+
+$$
+P(\theta | X_{1}, ..., X_{n}) \propto P(\theta)P(X_{1}, ..., X_{n}|\theta)
+$$
+
+Let's say, then, you have some prior knowledge about where $\theta$ arises: 
+$$
+\pi\big(\theta\big)
+$$
+
+This information can be included and inferences can be made on the resulting distribution, the posterior:
+
+$$
+\pi_{n}\big(\theta\big) \propto \pi\big(\theta\big)L\big(\theta)
+$$
+
+Now your estimate for $\theta$ becomes:
+$$
+\hat \theta = arg \ \underset{\theta} max \ \pi_{n}\big(\theta\big)
+$$
+
+
+
+\newpage
+Stars can be considered a multinomial distribution. The multinomial distribution is a generalization of the binomial distribution. Instead of 2 outcomes (0 or 1), there are k outcomes. It takes the form:
+
+$$
+L\big(p_{1}, ... , p_{k}\big)= \frac{n!}{x_{1}!...x_{k}!}p_{1}^{y_1}\times...\times p_{k}^{y_k}
+$$
+
+In this case, $p_{1}$ is the probability of getting a 1 star rating and $p_{k}$ is the probability of getting a $k$ star rating. The conjugate prior for this scenario is a Dirichlet distribution with $k$ different parameters.
+
+$$
+\pi\big(p\big) = \frac{1}{B\big(\alpha)} \Pi_{i=1}^{k}p_{i}^{\alpha_{i}-1}
+$$
+
+
+$$
+p_{1}, ..., p_{K} \sim Dir(\alpha_{1}, ... , \alpha_{K})
+$$
+$$
+y_{1}, ..., y_{K} \sim Mult(p_{1}, ..., p_{K})
+$$
+
+Posterior
+
+$$
+\propto \Pi_{j=1}^{K}p_{j}^{a_{j}-1}\Pi_{y_{i}}^{n}\Pi_{j=1}^{K}p_{j}^{y_{i}^{(j)}} \\ 
+= \Pi_{j=1}^{K}p_{j}^{\alpha_{j}-1 + \sum_{y_i=1}^{n}y_{i}^{(j)}}
+$$
+
+This density is exactly that of a Dirichlet distribution, except we have
+
+$$
+\alpha_{j}^{'} = \alpha_{j} + \sum_{y_i=1}^{n}y_{i}^{(j)}
+$$
+
+The posterior, can be summarized as:
+
+$$
+Dir(\alpha_{1}^{'}, ..., \alpha_{K}^{'})
+$$
+
